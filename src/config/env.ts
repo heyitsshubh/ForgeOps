@@ -14,6 +14,12 @@ const envSchema = z.object({
    * Useful for distinguishing between development (e.g. 'debug') and production (e.g. 'info').
    */
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
+
+  /**
+   * GitHub Personal Access Token (PAT).
+   * Required to authenticate API requests to GitHub.
+   */
+  GITHUB_TOKEN: z.string().min(1, 'GITHUB_TOKEN is required'),
 });
 
 // Parse and export the validated environment variables

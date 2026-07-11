@@ -26,6 +26,7 @@
   },
   "type": "module",
   "dependencies": {
+    "octokit": "^5.0.5",
     "pino": "^10.3.1"
   }
 }
