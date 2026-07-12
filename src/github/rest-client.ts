@@ -1,5 +1,6 @@
 import { RequestError } from 'octokit';
 import { logger } from '../utils/logger.js';
+import { githubApiCallsTotal, errorsTotal } from '../metrics/prometheus.js';
 
 /**
  * Executes a GitHub REST API request and translates raw HTTP errors
@@ -11,8 +12,12 @@ import { logger } from '../utils/logger.js';
 export async function withGithubErrorHandling<T>(requestFn: Promise<{ data: T }>): Promise<T> {
   try {
     const response = await requestFn;
+    githubApiCallsTotal.inc({ method: 'REST', status: 'success' });
     return response.data;
   } catch (error: any) {
+    githubApiCallsTotal.inc({ method: 'REST', status: 'error' });
+    errorsTotal.inc({ type: 'github' });
+
     if (error instanceof RequestError) {
       const status = error.status;
       const url = error.request.url;

@@ -1,5 +1,6 @@
 import { redisManager } from './redis.js';
 import { logger } from '../utils/logger.js';
+import { redisCacheOperations } from '../metrics/prometheus.js';
 
 export class CacheService {
   /**
@@ -22,10 +23,12 @@ export class CacheService {
       const data = await client.get(key);
       if (data) {
         logger.debug({ context: 'CacheService', event: 'HIT', key }, 'Cache hit');
+        redisCacheOperations.inc({ result: 'hit' });
         return JSON.parse(data) as T;
       }
 
       logger.debug({ context: 'CacheService', event: 'MISS', key }, 'Cache miss');
+      redisCacheOperations.inc({ result: 'miss' });
       return null;
     } catch (error) {
       logger.error({ context: 'CacheService', key, error }, 'Error reading from cache');

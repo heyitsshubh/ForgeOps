@@ -1,5 +1,6 @@
 import { GraphqlResponseError } from '@octokit/graphql';
 import { logger } from '../utils/logger.js';
+import { githubApiCallsTotal, errorsTotal } from '../metrics/prometheus.js';
 
 /**
  * Executes a GitHub GraphQL API request and translates complex GraphQL errors
@@ -10,8 +11,13 @@ import { logger } from '../utils/logger.js';
  */
 export async function withGithubGraphQLErrorHandling<T>(requestFn: Promise<T>): Promise<T> {
   try {
-    return await requestFn;
+    const data = await requestFn;
+    githubApiCallsTotal.inc({ method: 'GraphQL', status: 'success' });
+    return data;
   } catch (error: any) {
+    githubApiCallsTotal.inc({ method: 'GraphQL', status: 'error' });
+    errorsTotal.inc({ type: 'github' });
+
     if (error instanceof GraphqlResponseError) {
       logger.error(
         {
