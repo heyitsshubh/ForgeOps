@@ -3,6 +3,7 @@ import { retry } from '@octokit/plugin-retry';
 import { throttling } from '@octokit/plugin-throttling';
 import { env } from '../config/env.js';
 import { logger } from '../utils/logger.js';
+import { githubRateLimitsHit } from '../metrics/prometheus.js';
 
 /**
  * Initializes and returns a configured Octokit instance.
@@ -28,6 +29,7 @@ export const initializeGitHubClient = (): Octokit => {
           { context: 'OctokitThrottling', retryAfter, retryCount },
           `Rate limit hit for request ${options.method} ${options.url}`,
         );
+        githubRateLimitsHit.inc({ type: 'primary' });
 
         // Retry once after hitting a rate limit error, then give up
         if (retryCount < 1) {
@@ -41,6 +43,7 @@ export const initializeGitHubClient = (): Octokit => {
           { context: 'OctokitThrottling', retryAfter },
           `Secondary rate limit hit for request ${options.method} ${options.url}`,
         );
+        githubRateLimitsHit.inc({ type: 'secondary' });
       },
     },
     retry: {

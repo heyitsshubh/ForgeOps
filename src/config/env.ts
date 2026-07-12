@@ -26,6 +26,12 @@ const envSchema = z.object({
    * Used for caching GitHub API responses and rate limits.
    */
   REDIS_URL: z.string().url().default('redis://localhost:6379'),
+
+  /**
+   * Port to expose Prometheus metrics (e.g. 9090)
+   * The MCP server runs on stdio, but Prometheus needs an HTTP endpoint to scrape.
+   */
+  PROMETHEUS_PORT: z.coerce.number().int().positive().default(9090),
 });
 
 // Parse and export the validated environment variables
