@@ -1,6 +1,7 @@
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { logger } from '../utils/logger.js';
+import { redisManager } from '../cache/redis.js';
 
 /**
  * ForgeOpsServer is the core wrapper around the Model Context Protocol (MCP) server.
@@ -56,6 +57,7 @@ export class ForgeOpsServer {
    */
   async close() {
     await this.server.close();
+    await redisManager.close();
     logger.info({ context: 'MCPServer' }, 'Server closed');
   }
 }

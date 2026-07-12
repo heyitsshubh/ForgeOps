@@ -20,6 +20,12 @@ const envSchema = z.object({
    * Required to authenticate API requests to GitHub.
    */
   GITHUB_TOKEN: z.string().min(1, 'GITHUB_TOKEN is required'),
+
+  /**
+   * Redis Connection String (e.g. redis://localhost:6379)
+   * Used for caching GitHub API responses and rate limits.
+   */
+  REDIS_URL: z.string().url().default('redis://localhost:6379'),
 });
 
 // Parse and export the validated environment variables
