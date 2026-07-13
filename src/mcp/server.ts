@@ -1,8 +1,14 @@
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { logger } from '../utils/logger.js';
 import { redisManager } from '../cache/redis.js';
 import { startMetricsServer } from '../metrics/prometheus.js';
+import { toolRegistry } from './tool-registry.js';
+
+// Auto-register tools by importing them
+import '../tools/issues.js';
+
 import { Server as HttpServer } from 'node:http';
 
 /**
@@ -42,6 +48,29 @@ export class ForgeOpsServer {
       logger.info({ context: 'MCPServer' }, 'Received SIGTERM, shutting down server...');
       await this.close();
       process.exit(0);
+    });
+
+    this.setupHandlers();
+  }
+
+  private setupHandlers() {
+    this.server.setRequestHandler(ListToolsRequestSchema, async () => {
+      return {
+        tools: toolRegistry.getTools(),
+      };
+    });
+
+    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
+      const { name, arguments: args } = request.params;
+      try {
+        return await toolRegistry.executeTool(name, args);
+      } catch (error: any) {
+        logger.error({ context: 'MCPServer', tool: name, error }, 'Tool execution failed');
+        return {
+          content: [{ type: 'text', text: `Error executing ${name}: ${error.message}` }],
+          isError: true,
+        };
+      }
     });
   }
 
