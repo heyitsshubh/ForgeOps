@@ -1,3 +1,8 @@
+import { otelSDK } from './tracing/opentelemetry.js';
+
+// Start tracing before requiring any other modules
+otelSDK.start();
+
 import { logger } from './utils/logger.js';
 import { ForgeOpsServer } from './mcp/server.js';
 
