@@ -23,9 +23,8 @@ export async function main() {
   }
 }
 
-if (process.argv[1] === new URL(import.meta.url).pathname) {
-  main().catch((err) => {
-    logger.fatal({ context: 'Startup', err }, 'Unhandled exception during startup');
-    process.exit(1);
-  });
-}
+// Start the application unconditionally since index.ts is our entry point
+main().catch((err) => {
+  logger.fatal({ context: 'Startup', err }, 'Unhandled exception during startup');
+  process.exit(1);
+});
