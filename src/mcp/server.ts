@@ -11,6 +11,7 @@ import '../tools/issues.js';
 import '../tools/prs.js';
 import '../tools/branches.js';
 import '../tools/commits.js';
+import '../tools/workflows.js';
 
 import { Server as HttpServer } from 'node:http';
 
