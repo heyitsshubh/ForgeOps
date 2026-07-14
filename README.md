@@ -1,106 +1,325 @@
-# ForgeOps ⚒️
-**AI-Powered GitHub Engineering Assistant (MCP)**
+# ForgeOps
 
-ForgeOps is a production-grade Model Context Protocol (MCP) server that enables AI clients (like Claude Desktop, Cursor, and VS Code) to interact intelligently with GitHub repositories.
+> **AI-Powered GitHub Engineering Assistant** — A production-grade [Model Context Protocol (MCP)](https://modelcontextprotocol.io) server that gives AI assistants like Claude full control over GitHub repositories.
 
-Built with **Clean Architecture** principles, ForgeOps is designed for scale, resilience, and deep observability, offering a suite of powerful tools for issues, pull requests, branch management, and repository analytics.
-
----
-
-## 🏗️ Architecture
-
-ForgeOps operates entirely locally over `stdio`, ensuring your AI interactions remain secure. It uses a robust infrastructure layer:
-
-*   **Model Context Protocol (MCP)**: Native integration via `@modelcontextprotocol/sdk`.
-*   **GitHub Clients**: Highly resilient REST and GraphQL clients using `octokit`, featuring automatic rate-limit throttling and intelligent error translation for the LLM.
-*   **Caching Layer (Redis)**: Aggressive caching of read-heavy GitHub endpoints to save rate limits and ensure lightning-fast AI responses.
-*   **Structured Logging (Pino)**: High-performance JSON logging.
-*   **Metrics (Prometheus)**: Built-in `/metrics` server (default port `9090`) tracking API limits, cache hits/misses, and system errors.
-*   **Distributed Tracing (OpenTelemetry)**: Auto-instrumentation for deep latency analysis across Redis and GitHub API calls.
+[![Node.js](https://img.shields.io/badge/node-20%2B-brightgreen)](https://nodejs.org)
+[![TypeScript](https://img.shields.io/badge/typescript-5%2B-blue)](https://typescriptlang.org)
+[![MCP SDK](https://img.shields.io/badge/MCP%20SDK-1.29.0-purple)](https://github.com/modelcontextprotocol/sdk)
+[![License: ISC](https://img.shields.io/badge/license-ISC-lightgrey)](./LICENSE)
+[![Tests](https://img.shields.io/badge/tests-21%20passing-success)](./src)
 
 ---
 
-## 🚀 Getting Started
+## What is ForgeOps?
 
-### Prerequisites
-1.  **Node.js** (v18 or higher)
-2.  **Redis** (Local instance or Docker container)
-3.  **GitHub Personal Access Token (PAT)**
+ForgeOps connects Claude Desktop (or any MCP-compatible AI client) directly to your GitHub repositories. Instead of copy-pasting code into a chat window, Claude can natively:
 
-### Installation
-Clone the repository and install dependencies:
+- 📋 **Read and manage Issues** — list, search, create, and close
+- 🔀 **Review Pull Requests** — fetch raw diffs, approve, request changes, and merge
+- 🌿 **Manipulate Branches** — list, create, and delete Git references
+- 📜 **Inspect Commit History** — walk the git log and read exact file-level diffs
+- ⚙️ **Control CI/CD** — trigger, re-run, cancel, and monitor GitHub Actions workflows
+- 📊 **Analyse Repository Health** — contributor stats, commit velocity, code frequency, and traffic
+
+All of this runs locally on your machine over `stdio` — no cloud dependencies, no third-party data sharing.
+
+---
+
+## Architecture
+
+```
+┌──────────────────────────────────────────────────────┐
+│                  Claude Desktop (AI)                  │
+└────────────────────────┬─────────────────────────────┘
+                         │  JSON-RPC over stdio
+                         ▼
+┌──────────────────────────────────────────────────────┐
+│                 ForgeOps MCP Server                   │
+│  ┌─────────────┐   ┌──────────────┐  ┌────────────┐ │
+│  │ Tool        │   │  Business    │  │  GitHub    │ │
+│  │ Registry    │──▶│  Services    │─▶│  Clients   │ │
+│  └─────────────┘   └──────────────┘  └────────────┘ │
+│         │                │                           │
+│         │         ┌──────▼──────┐                   │
+│         │         │ Redis Cache │                   │
+│         │         └─────────────┘                   │
+│         │                                            │
+│  ┌──────▼──────────────────────────────────────┐    │
+│  │  Prometheus /metrics  │  OpenTelemetry       │    │
+│  └─────────────────────────────────────────────┘    │
+└──────────────────────────────────────────────────────┘
+```
+
+### Layer Responsibilities
+
+| Layer | Location | Responsibility |
+|-------|----------|---------------|
+| **MCP Server** | `src/mcp/` | stdio transport, tool dispatch via `ToolRegistry` |
+| **Tools** | `src/tools/` | Zod schema validation, request/response shaping |
+| **Services** | `src/services/` | Business logic, cache-first data access |
+| **GitHub Clients** | `src/github/` | Resilient REST + GraphQL wrappers with retry/throttle |
+| **Cache** | `src/cache/` | Redis-backed TTL cache with graceful degradation |
+| **Observability** | `src/metrics/`, `src/tracing/` | Prometheus metrics, OpenTelemetry tracing |
+
+---
+
+## Tools Reference
+
+### 📋 Issues (4 tools)
+
+| Tool | Description |
+|------|-------------|
+| `list_issues` | List open issues in a repository |
+| `search_issues` | Search issues using GitHub search syntax |
+| `create_issue` | Create a new issue |
+| `update_issue_state` | Close or reopen an existing issue |
+
+### 🔀 Pull Requests (5 tools)
+
+| Tool | Description |
+|------|-------------|
+| `list_pull_requests` | List open PRs |
+| `fetch_pr_diff` | Fetch the raw git diff of a PR |
+| `create_pull_request` | Open a new PR between two branches |
+| `review_pull_request` | Submit APPROVE / REQUEST_CHANGES / COMMENT review |
+| `merge_pull_request` | Merge via merge, squash, or rebase strategy |
+
+### 🌿 Branches (4 tools)
+
+| Tool | Description |
+|------|-------------|
+| `list_branches` | List all branches |
+| `get_branch` | Get branch details and latest commit author |
+| `create_branch` | Create a new branch from a commit SHA |
+| `delete_branch` | Delete a branch |
+
+### 📜 Commits (2 tools)
+
+| Tool | Description |
+|------|-------------|
+| `list_commits` | List commit history (optionally scoped to a branch/SHA) |
+| `get_commit` | Get a commit's full diff with per-file patch |
+
+### ⚙️ GitHub Actions (6 tools)
+
+| Tool | Description |
+|------|-------------|
+| `list_workflows` | List all workflow definitions |
+| `list_workflow_runs` | List recent runs for a workflow |
+| `get_workflow_run_logs_url` | Get the log download URL for a run |
+| `trigger_workflow` | Fire a `workflow_dispatch` event |
+| `rerun_workflow` | Re-run a failed or cancelled workflow |
+| `cancel_workflow_run` | Cancel an in-progress workflow run |
+
+### 📊 Repository Analytics (6 tools)
+
+| Tool | Description |
+|------|-------------|
+| `get_repo_info` | Stars, forks, language, topics, license, open issues |
+| `get_contributors` | Top contributors sorted by commit count |
+| `get_commit_activity` | Weekly commit velocity for the last 12 weeks |
+| `get_code_frequency` | Lines added/deleted per week |
+| `get_traffic_views` | Page view traffic (last 14 days) |
+| `list_labels` | All issue labels with colors and descriptions |
+
+---
+
+## Quick Start
+
+### 1. Prerequisites
+
+- Node.js 20+
+- A GitHub Personal Access Token ([create one here](https://github.com/settings/personal-access-tokens/new)) with `repo` and `read:org` scopes
+- Redis (optional — the server degrades gracefully without it)
+
+### 2. Clone and Install
+
 ```bash
 git clone https://github.com/heyitsshubh/ForgeOps.git
 cd ForgeOps
 npm install
 ```
 
-### Configuration
-Create a `.env` file in the root directory (or inject these into your environment):
+### 3. Configure Environment
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env`:
 
 ```env
-# Required: Your GitHub Personal Access Token
 GITHUB_TOKEN=ghp_your_token_here
-
-# Optional Configurations
-LOG_LEVEL=info                     # trace | debug | info | warn | error | fatal
-REDIS_URL=redis://localhost:6379   # Connection string for Redis caching
-PROMETHEUS_PORT=9090               # Port to expose Prometheus metrics scraper
-OTEL_SERVICE_NAME=forgeops-mcp     # OpenTelemetry service name
+REDIS_URL=redis://localhost:6379   # optional
+PROMETHEUS_PORT=9090
+LOG_LEVEL=info
 ```
 
-### Building & Running
-To run the server in development mode (with hot-reloading and pretty-printing logs):
-```bash
-npm run dev
-```
+### 4. Build
 
-To build for production:
 ```bash
 npm run build
-npm start
 ```
+
+### 5. Test with MCP Inspector
+
+```bash
+npx -y @modelcontextprotocol/inspector node dist/index.js
+```
+
+Open the URL shown in your terminal, click **Connect**, then explore all 27 tools from the **Tools** tab.
 
 ---
 
-## 🔌 Integrating with Claude Desktop
+## Claude Desktop Integration
 
-To use ForgeOps with Claude Desktop, you need to add it to your `claude_desktop_config.json` file.
+Add the following to your `claude_desktop_config.json`:
 
-**Path to config:**
-*   **Mac**: `~/Library/Application Support/Claude/claude_desktop_config.json`
-*   **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+**Windows**: `%APPDATA%\Claude\claude_desktop_config.json`  
+**macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
 
-**Configuration:**
 ```json
 {
   "mcpServers": {
     "forgeops": {
       "command": "node",
-      "args": ["/absolute/path/to/ForgeOps/dist/index.js"],
+      "args": ["C:\\path\\to\\ForgeOps\\dist\\index.js"],
       "env": {
         "GITHUB_TOKEN": "ghp_your_token_here",
-        "REDIS_URL": "redis://localhost:6379"
+        "REDIS_URL": "redis://localhost:6379",
+        "LOG_LEVEL": "info"
       }
     }
   }
 }
 ```
 
----
+Restart Claude Desktop. You will see a 🔨 icon in the chat bar indicating ForgeOps is connected.
 
-## 🛠️ Features (Development Roadmap)
+**Try asking Claude:**
+> *"List the open issues in my repository and create a summary grouped by label."*
 
-- [x] **Infrastructure**: Pino, Prometheus, OpenTelemetry, Redis, Zod Config
-- [x] **GitHub Client**: Resilient REST & GraphQL wrappers
-- [x] **Context Resolver**: Intelligent target-repository resolution
-- [ ] **Issue Tools**: Search, read, create, and manage GitHub issues.
-- [ ] **Pull Request Tools**: Review code, fetch diffs, assign reviewers, and merge PRs.
-- [ ] **Branch & Commit Tools**: Compare branches, list commits, and trace history.
-- [ ] **Workflow Tools**: Monitor and manage GitHub Actions.
-- [ ] **Repository Analytics**: Fetch stats, languages, and contributor insights.
+> *"Fetch the diff for PR #42 and identify any potential security issues."*
+
+> *"Check the CI status for the last 5 commits on main."*
 
 ---
 
-## 🤝 Contributing
-ForgeOps strictly follows **Git Flow** and **Conventional Commits**. Please branch off `develop` and ensure all tests and linters pass before submitting a Pull Request.
+## Docker
+
+### Run with Docker Compose (recommended)
+
+```bash
+# Copy and configure your environment
+cp .env.example .env
+
+# Build and start ForgeOps + Redis + Prometheus
+docker compose up --build
+```
+
+This starts:
+- `forgeops-mcp` — the MCP server (Prometheus metrics on `:9090`)
+- `forgeops-redis` — Redis cache with LRU eviction and persistence
+- `forgeops-prometheus` — Prometheus scraping metrics on `:9091`
+
+### Build the image manually
+
+```bash
+docker build -t forgeops:latest .
+```
+
+---
+
+## Observability
+
+### Prometheus Metrics
+
+Visit `http://localhost:9090/metrics` while the server is running to see:
+
+```
+# Tool call counters (by tool name)
+forgeops_mcp_tool_calls_total{tool="list_issues"} 12
+
+# Redis cache performance
+forgeops_redis_cache_operations_total{result="hit"} 8
+forgeops_redis_cache_operations_total{result="miss"} 4
+
+# GitHub API rate limit remaining
+forgeops_github_rate_limit_remaining 4923
+```
+
+### OpenTelemetry
+
+Distributed traces are captured via auto-instrumentation. In production, configure `OTEL_EXPORTER_OTLP_ENDPOINT` to export spans to Jaeger, Datadog, or any OTLP-compatible backend.
+
+---
+
+## Development
+
+```bash
+# Run in watch mode (auto-reloads on save)
+npm run dev
+
+# Type-check + compile
+npm run build
+
+# Run all 21 unit tests
+npm test
+
+# Format source files
+npm run format
+```
+
+### Project Structure
+
+```
+ForgeOps/
+├── src/
+│   ├── cache/              # Redis CacheService
+│   ├── config/             # Zod-validated environment variables
+│   ├── github/             # Octokit REST + GraphQL clients
+│   ├── mcp/                # MCP server + ToolRegistry
+│   ├── metrics/            # Prometheus counters and gauges
+│   ├── services/           # Business logic (IssueService, PRService, ...)
+│   ├── tools/              # MCP tool handlers (issues.ts, prs.ts, ...)
+│   ├── tracing/            # OpenTelemetry SDK setup
+│   ├── utils/              # Shared logger
+│   └── index.ts            # Application entry point
+├── Dockerfile              # Multi-stage production image
+├── docker-compose.yml      # Full stack orchestration
+├── prometheus.yml          # Prometheus scrape config
+├── vitest.config.ts        # Test configuration
+└── .env.example            # Environment variable template
+```
+
+### Git Flow
+
+This project follows [Git Flow](https://nvie.com/posts/a-successful-git-branching-model/):
+
+- `main` — production-ready releases only
+- `develop` — integration branch, always deployable
+- `feature/*` — one branch per feature, merged into `develop` via PR
+
+All commits follow the [Conventional Commits](https://www.conventionalcommits.org/) specification:
+```
+feat(issues): implement create_issue tool
+fix(mcp): resolve stdio stream corruption on Windows
+test(services): add unit tests for BranchService
+```
+
+---
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/my-feature`
+3. Write your changes following the Clean Architecture pattern
+4. Add tests for any new service methods
+5. Run `npm test` and `npm run build` — both must pass
+6. Open a Pull Request against `develop`
+
+---
+
+## License
+
+ISC © [heyitsshubh](https://github.com/heyitsshubh)
