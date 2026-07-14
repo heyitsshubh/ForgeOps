@@ -1,7 +1,8 @@
 import { z } from 'zod';
 import * as dotenv from 'dotenv';
 
-// Load environment variables from .env file if present
+// Disable dotenv logging which corrupts MCP stdio streams
+process.env.DOTENV_QUIET = 'true';
 dotenv.config();
 
 /**

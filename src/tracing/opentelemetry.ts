@@ -1,6 +1,6 @@
 import { NodeSDK } from '@opentelemetry/sdk-node';
 import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
-import { ConsoleSpanExporter } from '@opentelemetry/sdk-trace-node';
+import { InMemorySpanExporter } from '@opentelemetry/sdk-trace-node';
 import { logger } from '../utils/logger.js';
 import { trace } from '@opentelemetry/api';
 
@@ -12,9 +12,9 @@ process.env.OTEL_SERVICE_NAME = 'forgeops-mcp';
  * to automatically generate distributed traces.
  */
 export const otelSDK = new NodeSDK({
-  // For this local MCP server MVP, we'll just export spans to the console.
+  // For MCP servers over stdio, we CANNOT use ConsoleSpanExporter because it writes to stdout and breaks the JSON-RPC stream.
   // In production, this would be replaced with an OTLPTraceExporter sending to Jaeger/Datadog.
-  traceExporter: new ConsoleSpanExporter(),
+  traceExporter: new InMemorySpanExporter(),
   instrumentations: [
     getNodeAutoInstrumentations({
       // We can disable specific instrumentations if they are too noisy
