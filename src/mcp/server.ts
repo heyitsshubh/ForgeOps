@@ -8,6 +8,7 @@ import { toolRegistry } from './tool-registry.js';
 
 // Auto-register tools by importing them
 import '../tools/issues.js';
+import '../tools/prs.js';
 
 import { Server as HttpServer } from 'node:http';
 
