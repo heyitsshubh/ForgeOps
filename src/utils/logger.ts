@@ -10,5 +10,5 @@ export const logger = pino(
   {
     level: env.LOG_LEVEL,
   },
-  pino.destination(2) // 2 = stderr. CRITICAL for MCP over stdio
+  pino.destination(2), // 2 = stderr. CRITICAL for MCP over stdio
 );
