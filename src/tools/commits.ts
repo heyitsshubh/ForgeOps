@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { zodToJsonSchema } from 'zod-to-json-schema';
+import { toInputSchema } from '../utils/schema.js';
 import { toolRegistry } from '../mcp/tool-registry.js';
 import { CommitService } from '../services/commit-service.js';
 import { RepositoryResolver } from '../services/repository-resolver.js';
@@ -27,7 +27,7 @@ const GetCommitSchema = RepoSchema.extend({
 toolRegistry.register({
   name: 'list_commits',
   description: 'List commits in a GitHub repository',
-  inputSchema: zodToJsonSchema(ListCommitsSchema as any),
+  inputSchema: toInputSchema(ListCommitsSchema),
   handler: async (args: any) => {
     const { repository, limit, branchOrSha } = args;
     const { owner, name } = await RepositoryResolver.resolve({ explicitRepo: repository });
@@ -61,7 +61,7 @@ toolRegistry.register({
 toolRegistry.register({
   name: 'get_commit',
   description: 'Get detailed information about a specific commit, including file changes',
-  inputSchema: zodToJsonSchema(GetCommitSchema as any),
+  inputSchema: toInputSchema(GetCommitSchema),
   handler: async (args: any) => {
     const { repository, ref } = args;
     const { owner, name } = await RepositoryResolver.resolve({ explicitRepo: repository });

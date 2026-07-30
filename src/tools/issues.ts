@@ -1,9 +1,9 @@
 import { z } from 'zod';
-import { zodToJsonSchema } from 'zod-to-json-schema';
 import { toolRegistry } from '../mcp/tool-registry.js';
 import { IssueService } from '../services/issue-service.js';
 import { RepositoryResolver } from '../services/repository-resolver.js';
 import { logger } from '../utils/logger.js';
+import { toInputSchema } from '../utils/schema.js';
 
 // --- Schemas ---
 const RepoSchema = z.object({
@@ -34,7 +34,7 @@ const UpdateIssueSchema = RepoSchema.extend({
 toolRegistry.register({
   name: 'list_issues',
   description: 'List open issues in a GitHub repository',
-  inputSchema: zodToJsonSchema(ListIssuesSchema as any),
+  inputSchema: toInputSchema(ListIssuesSchema),
   handler: async (args: any) => {
     const { repository, limit } = args;
     const { owner, name } = await RepositoryResolver.resolve({ explicitRepo: repository });
@@ -65,7 +65,7 @@ toolRegistry.register({
 toolRegistry.register({
   name: 'search_issues',
   description: 'Search for issues using GitHub search syntax',
-  inputSchema: zodToJsonSchema(SearchIssuesSchema as any),
+  inputSchema: toInputSchema(SearchIssuesSchema),
   handler: async (args: any) => {
     const { repository, query, limit } = args;
     const { owner, name } = await RepositoryResolver.resolve({ explicitRepo: repository });
@@ -102,7 +102,7 @@ toolRegistry.register({
 toolRegistry.register({
   name: 'create_issue',
   description: 'Create a new issue in a GitHub repository',
-  inputSchema: zodToJsonSchema(CreateIssueSchema as any),
+  inputSchema: toInputSchema(CreateIssueSchema),
   handler: async (args: any) => {
     const { repository, title, body } = args;
     const { owner, name } = await RepositoryResolver.resolve({ explicitRepo: repository });
@@ -124,7 +124,7 @@ toolRegistry.register({
 toolRegistry.register({
   name: 'update_issue_state',
   description: 'Close or reopen an existing GitHub issue',
-  inputSchema: zodToJsonSchema(UpdateIssueSchema as any),
+  inputSchema: toInputSchema(UpdateIssueSchema),
   handler: async (args: any) => {
     const { repository, issueNumber, state } = args;
     const { owner, name } = await RepositoryResolver.resolve({ explicitRepo: repository });

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { zodToJsonSchema } from 'zod-to-json-schema';
+import { toInputSchema } from '../utils/schema.js';
 import { toolRegistry } from '../mcp/tool-registry.js';
 import { AnalyticsService } from '../services/analytics-service.js';
 import { RepositoryResolver } from '../services/repository-resolver.js';
@@ -20,7 +20,7 @@ toolRegistry.register({
   name: 'get_repo_info',
   description:
     'Get detailed metadata and statistics about a GitHub repository (stars, forks, open issues, language, etc.)',
-  inputSchema: zodToJsonSchema(RepoSchema.extend({}) as any),
+  inputSchema: toInputSchema(RepoSchema.extend({})),
   handler: async (args: any) => {
     const { repository } = args;
     const { owner, name } = await RepositoryResolver.resolve({ explicitRepo: repository });
@@ -63,7 +63,7 @@ toolRegistry.register({
 toolRegistry.register({
   name: 'get_contributors',
   description: 'Get the top contributors to a repository sorted by number of commits',
-  inputSchema: zodToJsonSchema(GetContributorsSchema as any),
+  inputSchema: toInputSchema(GetContributorsSchema),
   handler: async (args: any) => {
     const { repository, limit } = args;
     const { owner, name } = await RepositoryResolver.resolve({ explicitRepo: repository });
@@ -98,7 +98,7 @@ toolRegistry.register({
   name: 'get_commit_activity',
   description:
     'Get weekly commit activity for the past year — useful for spotting development velocity trends',
-  inputSchema: zodToJsonSchema(RepoSchema.extend({}) as any),
+  inputSchema: toInputSchema(RepoSchema.extend({})),
   handler: async (args: any) => {
     const { repository } = args;
     const { owner, name } = await RepositoryResolver.resolve({ explicitRepo: repository });
@@ -134,7 +134,7 @@ toolRegistry.register({
 toolRegistry.register({
   name: 'get_code_frequency',
   description: 'Get weekly code additions and deletions per week for the repository lifetime',
-  inputSchema: zodToJsonSchema(RepoSchema.extend({}) as any),
+  inputSchema: toInputSchema(RepoSchema.extend({})),
   handler: async (args: any) => {
     const { repository } = args;
     const { owner, name } = await RepositoryResolver.resolve({ explicitRepo: repository });
@@ -170,7 +170,7 @@ toolRegistry.register({
   name: 'get_traffic_views',
   description:
     'Get page view traffic for the repository over the last 14 days (requires push access)',
-  inputSchema: zodToJsonSchema(RepoSchema.extend({}) as any),
+  inputSchema: toInputSchema(RepoSchema.extend({})),
   handler: async (args: any) => {
     const { repository } = args;
     const { owner, name } = await RepositoryResolver.resolve({ explicitRepo: repository });
@@ -207,7 +207,7 @@ toolRegistry.register({
 toolRegistry.register({
   name: 'list_labels',
   description: 'List all issue labels defined in a repository',
-  inputSchema: zodToJsonSchema(RepoSchema.extend({}) as any),
+  inputSchema: toInputSchema(RepoSchema.extend({})),
   handler: async (args: any) => {
     const { repository } = args;
     const { owner, name } = await RepositoryResolver.resolve({ explicitRepo: repository });

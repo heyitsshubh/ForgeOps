@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { zodToJsonSchema } from 'zod-to-json-schema';
+import { toInputSchema } from '../utils/schema.js';
 import { toolRegistry } from '../mcp/tool-registry.js';
 import { PRService } from '../services/pr-service.js';
 import { RepositoryResolver } from '../services/repository-resolver.js';
@@ -45,7 +45,7 @@ const MergePRSchema = RepoSchema.extend({
 toolRegistry.register({
   name: 'list_pull_requests',
   description: 'List open Pull Requests in a GitHub repository',
-  inputSchema: zodToJsonSchema(ListPRsSchema as any),
+  inputSchema: toInputSchema(ListPRsSchema),
   handler: async (args: any) => {
     const { repository, limit } = args;
     const { owner, name } = await RepositoryResolver.resolve({ explicitRepo: repository });
@@ -80,7 +80,7 @@ toolRegistry.register({
 toolRegistry.register({
   name: 'fetch_pr_diff',
   description: 'Fetch the raw diff (code changes) of a Pull Request',
-  inputSchema: zodToJsonSchema(FetchDiffSchema as any),
+  inputSchema: toInputSchema(FetchDiffSchema),
   handler: async (args: any) => {
     const { repository, pullNumber } = args;
     const { owner, name } = await RepositoryResolver.resolve({ explicitRepo: repository });
@@ -106,7 +106,7 @@ toolRegistry.register({
 toolRegistry.register({
   name: 'create_pull_request',
   description: 'Create a new Pull Request',
-  inputSchema: zodToJsonSchema(CreatePRSchema as any),
+  inputSchema: toInputSchema(CreatePRSchema),
   handler: async (args: any) => {
     const { repository, title, head, base, body } = args;
     const { owner, name } = await RepositoryResolver.resolve({ explicitRepo: repository });
@@ -131,7 +131,7 @@ toolRegistry.register({
 toolRegistry.register({
   name: 'review_pull_request',
   description: 'Submit a review (Approve, Request Changes, or Comment) on a PR',
-  inputSchema: zodToJsonSchema(ReviewPRSchema as any),
+  inputSchema: toInputSchema(ReviewPRSchema),
   handler: async (args: any) => {
     const { repository, pullNumber, event, body } = args;
     const { owner, name } = await RepositoryResolver.resolve({ explicitRepo: repository });
@@ -156,7 +156,7 @@ toolRegistry.register({
 toolRegistry.register({
   name: 'merge_pull_request',
   description: 'Merge a Pull Request',
-  inputSchema: zodToJsonSchema(MergePRSchema as any),
+  inputSchema: toInputSchema(MergePRSchema),
   handler: async (args: any) => {
     const { repository, pullNumber, commitTitle, mergeMethod } = args;
     const { owner, name } = await RepositoryResolver.resolve({ explicitRepo: repository });

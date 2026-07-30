@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { zodToJsonSchema } from 'zod-to-json-schema';
+import { toInputSchema } from '../utils/schema.js';
 import { toolRegistry } from '../mcp/tool-registry.js';
 import { WorkflowService } from '../services/workflow-service.js';
 import { RepositoryResolver } from '../services/repository-resolver.js';
@@ -47,7 +47,7 @@ const CancelWorkflowSchema = RepoSchema.extend({
 toolRegistry.register({
   name: 'list_workflows',
   description: 'List all GitHub Actions workflows in a repository',
-  inputSchema: zodToJsonSchema(ListWorkflowsSchema as any),
+  inputSchema: toInputSchema(ListWorkflowsSchema),
   handler: async (args: any) => {
     const { repository } = args;
     const { owner, name } = await RepositoryResolver.resolve({ explicitRepo: repository });
@@ -81,7 +81,7 @@ toolRegistry.register({
 toolRegistry.register({
   name: 'list_workflow_runs',
   description: 'List recent runs for a specific GitHub Actions workflow',
-  inputSchema: zodToJsonSchema(ListWorkflowRunsSchema as any),
+  inputSchema: toInputSchema(ListWorkflowRunsSchema),
   handler: async (args: any) => {
     const { repository, workflowId, limit } = args;
     const { owner, name } = await RepositoryResolver.resolve({ explicitRepo: repository });
@@ -119,7 +119,7 @@ toolRegistry.register({
 toolRegistry.register({
   name: 'get_workflow_run_logs_url',
   description: 'Get the download URL for the logs of a specific workflow run',
-  inputSchema: zodToJsonSchema(GetWorkflowRunLogsSchema as any),
+  inputSchema: toInputSchema(GetWorkflowRunLogsSchema),
   handler: async (args: any) => {
     const { repository, runId } = args;
     const { owner, name } = await RepositoryResolver.resolve({ explicitRepo: repository });
@@ -144,7 +144,7 @@ toolRegistry.register({
 toolRegistry.register({
   name: 'trigger_workflow',
   description: 'Manually trigger a GitHub Actions workflow using workflow_dispatch',
-  inputSchema: zodToJsonSchema(TriggerWorkflowSchema as any),
+  inputSchema: toInputSchema(TriggerWorkflowSchema),
   handler: async (args: any) => {
     const { repository, workflowId, ref, inputs } = args;
     const { owner, name } = await RepositoryResolver.resolve({ explicitRepo: repository });
@@ -169,7 +169,7 @@ toolRegistry.register({
 toolRegistry.register({
   name: 'rerun_workflow',
   description: 'Re-run a failed or cancelled GitHub Actions workflow run',
-  inputSchema: zodToJsonSchema(RerunWorkflowSchema as any),
+  inputSchema: toInputSchema(RerunWorkflowSchema),
   handler: async (args: any) => {
     const { repository, runId } = args;
     const { owner, name } = await RepositoryResolver.resolve({ explicitRepo: repository });
@@ -194,7 +194,7 @@ toolRegistry.register({
 toolRegistry.register({
   name: 'cancel_workflow_run',
   description: 'Cancel a currently running GitHub Actions workflow run',
-  inputSchema: zodToJsonSchema(CancelWorkflowSchema as any),
+  inputSchema: toInputSchema(CancelWorkflowSchema),
   handler: async (args: any) => {
     const { repository, runId } = args;
     const { owner, name } = await RepositoryResolver.resolve({ explicitRepo: repository });

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { zodToJsonSchema } from 'zod-to-json-schema';
+import { toInputSchema } from '../utils/schema.js';
 import { toolRegistry } from '../mcp/tool-registry.js';
 import { BranchService } from '../services/branch-service.js';
 import { RepositoryResolver } from '../services/repository-resolver.js';
@@ -32,7 +32,7 @@ const DeleteBranchSchema = RepoSchema.extend({
 toolRegistry.register({
   name: 'list_branches',
   description: 'List branches in a GitHub repository',
-  inputSchema: zodToJsonSchema(ListBranchesSchema as any),
+  inputSchema: toInputSchema(ListBranchesSchema),
   handler: async (args: any) => {
     const { repository, limit } = args;
     const { owner, name } = await RepositoryResolver.resolve({ explicitRepo: repository });
@@ -65,7 +65,7 @@ toolRegistry.register({
 toolRegistry.register({
   name: 'get_branch',
   description: 'Get detailed information about a specific branch',
-  inputSchema: zodToJsonSchema(GetBranchSchema as any),
+  inputSchema: toInputSchema(GetBranchSchema),
   handler: async (args: any) => {
     const { repository, branch } = args;
     const { owner, name } = await RepositoryResolver.resolve({ explicitRepo: repository });
@@ -99,7 +99,7 @@ toolRegistry.register({
 toolRegistry.register({
   name: 'create_branch',
   description: 'Create a new branch from a base SHA',
-  inputSchema: zodToJsonSchema(CreateBranchSchema as any),
+  inputSchema: toInputSchema(CreateBranchSchema),
   handler: async (args: any) => {
     const { repository, branchName, baseSha } = args;
     const { owner, name } = await RepositoryResolver.resolve({ explicitRepo: repository });
@@ -124,7 +124,7 @@ toolRegistry.register({
 toolRegistry.register({
   name: 'delete_branch',
   description: 'Delete a branch',
-  inputSchema: zodToJsonSchema(DeleteBranchSchema as any),
+  inputSchema: toInputSchema(DeleteBranchSchema),
   handler: async (args: any) => {
     const { repository, branchName } = args;
     const { owner, name } = await RepositoryResolver.resolve({ explicitRepo: repository });
